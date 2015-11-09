@@ -1,26 +1,29 @@
-are an array in bash
+#!/bin/bash
+
+./cleanup.sh
+#declare an array in bash
 declare -a instanceARR
 
 
 
-mapfile -t instanceARR < <(aws ec2 run-instances --image-id ami-5189a661 --count $1 --instance-type t2.micro --key-name itmo544-vbox --security-group-ids sg-909b12f4 --subnet-id subnet-39aafd5c --associate-public-ip-address --iam-instance-profile Name=ght --user-data file://install-webserver.sh --output table |grep InstanceId | sed "s/|//g"| sed "s/ //g" | sed "s/InstanceId//g") 
+mapfile -t instanceARR < <(aws ec2 run-instances --image-id $1 --count $2 --instance-type $3 --key-name $6 --security-group-ids $4 --subnet-id $5 --associate-public-ip-address --iam-instance-profile $7 --user-data file://install-webserver.sh --output table |grep InstanceId | sed "s/|//g"| sed "s/ //g" | sed "s/InstanceId//g") 
 echo ${instanceARR[@]}
 
 aws ec2 wait instance-running --instance-ids ${instanceARR[@]}
 echo "instace are running"
 
-aws elb create-load-balancer --load-balancer-name $2 --listeners Protocol=HTTP,LoadBalancerPort=80,InstanceProtocol=HTTP,InstancePort=80 --subnets subnet-39aafd5c --security-groups sg-909b12f4 
+aws elb create-load-balancer --load-balancer-name itmo544-ght-elb --listeners Protocol=HTTP,LoadBalancerPort=80,InstanceProtocol=HTTP,InstancePort=80 --subnets subnet-39aafd5c --security-groups sg-909b12f4 
 echo -e "\nFinished launching ELB and sleeping 25 seconds"
 for i in {0..25};do echo -ne'.'; sleep 1;done
 echo "\n"
-aws elb register-instances-with-load-balancer --load-balancer-name $2 --instances ${instanceARR[@]}
-aws elb configure-health-check --load-balancer-name $2 --health-check Target=HTTP:80/index.html,Interval=30,UnhealthyThreshold=2,HealthyThreshold=2,Timeout=3
+aws elb register-instances-with-load-balancer --load-balancer-name itmo544-ght-elb --instances ${instanceARR[@]}
+aws elb configure-health-check --load-balancer-name itmo544-ght-elb --health-check Target=HTTP:80/index.html,Interval=30,UnhealthyThreshold=2,HealthyThreshold=2,Timeout=3
 
 #create launch configuration
 aws autoscaling create-launch-configuration --launch-configuration-name itmo544-launch-config --image-id ami-5189a661 --key-name itmo544-vbox --security-groups sg-909b12f4 --instance-type t2.micro --user-data file://install-webserver.sh --iam-instance-profile ght
 
 #create autoscaling 
-aws autoscaling create-auto-scaling-group --auto-scaling-group-name itmo-544-auto-scaling-group --launch-configuration-name itmo544-launch-config --load-balancer-names $2  --health-check-type ELB --min-size 3 --max-size 6 --desired-capacity 3 --default-cooldown 600 --health-check-grace-period 120 --vpc-zone-identifier subnet-39aafd5c
+aws autoscaling create-auto-scaling-group --auto-scaling-group-name itmo-544-auto-scaling-group --launch-configuration-name itmo544-launch-config --load-balancer-names itmo544-ght-elb  --health-check-type ELB --min-size 3 --max-size 6 --desired-capacity 3 --default-cooldown 600 --health-check-grace-period 120 --vpc-zone-identifier subnet-39aafd5c
 
 
 #create cloudwatch alarms
