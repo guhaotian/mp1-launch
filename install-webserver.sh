@@ -10,13 +10,13 @@ mv ./mp1/submit.php /var/www/html
 mv ./mp1/setup.php /var/www/html
 
 
-#curl -sS https://getcomposer.org/installer | sudo php &> /tmp/getcomposer.txt
+curl -sS https://getcomposer.org/installer | sudo php &> /tmp/getcomposer.txt
 
-#sudo php composer.phar require aws/aws-sdk-php &> /tmp/runcomposer.txt
+sudo php composer.phar require aws/aws-sdk-php &> /tmp/runcomposer.txt
 
-#sudo mv vendor /var/www/html &> /tmp/movevendor.txt
+sudo mv vendor /var/www/html &> /tmp/movevendor.txt
 
-#sudo php /var/www/html/setup.php &> /tmp/database-setup.txt
+sudo php /var/www/html/setup.php &> /tmp/database-setup.txt
 
 
 echo "Hello!" > /tmp/hello.txt
